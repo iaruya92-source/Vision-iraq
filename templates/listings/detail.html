@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}{{ listing.title }}{% endblock %}
+
+{% block content %}
+<section class="detail-section">
+    <div class="container">
+        <div class="detail-breadcrumb">
+            <a href="{{ url_for('main.index') }}">الرئيسية</a>
+            <i class="fas fa-chevron-left"></i>
+            {% if listing.category %}
+            <a href="{{ url_for('listings.search', category_id=listing.category.id) }}">{{ listing.category.name_ar }}</a>
+            <i class="fas fa-chevron-left"></i>
+            {% endif %}
+            <span>{{ listing.title[:50] }}</span>
+        </div>
+
+        <div class="detail-layout">
+            <!-- Right: Info -->
+            <div class="detail-info">
+                <div class="detail-header">
+                    <h1>
+                        {% if listing.is_featured %}
+                        <span class="featured-badge"><i class="fas fa-star"></i> مميز</span>
+                        {% endif %}
+                        {{ listing.title }}
+                    </h1>
+                    <div class="detail-price-row">
+                        {% if listing.price %}
+                        <span class="detail-price">{{ "{:,.0f}".format(listing.price) }} {{ listing.currency }}</span>
+                        {% endif %}
+                        <span class="detail-type {{ listing.listing_type }}">
+                            {{ {'sale':'للبيع','rent':'للإيجار','investment':'للاستثمار'}[listing.listing_type] or listing.listing_type }}
+                        </span>
+                    </div>
+                    <p class="detail-location"><i class="fas fa-map-marker-alt"></i> {{ listing.governorate }}{% if listing.district %} - {{ listing.district }}{% endif %}</p>
+                </div>
+
+                <div class="detail-meta-box">
+                    {% if listing.area %}<div class="meta-item"><i class="fas fa-ruler-combined"></i><span>المساحة</span><strong>{{ listing.area|int }} م²</strong></div>{% endif %}
+                    {% if listing.rooms %}<div class="meta-item"><i class="fas fa-bed"></i><span>الغرف</span><strong>{{ listing.rooms }}</strong></div>{% endif %}
+                    {% if listing.bathrooms %}<div class="meta-item"><i class="fas fa-bath"></i><span>الحمامات</span><strong>{{ listing.bathrooms }}</strong></div>{% endif %}
+                    {% if listing.floor %}<div class="meta-item"><i class="fas fa-building"></i><span>الطابق</span><strong>{{ listing.floor }}</strong></div>{% endif %}
+                    {% if listing.year_built %}<div class="meta-item"><i class="fas fa-calendar"></i><span>سنة البناء</span><strong>{{ listing.year_built }}</strong></div>{% endif %}
+                    {% if listing.car_type %}<div class="meta-item"><i class="fas fa-car"></i><span>نوع السيارة</span><strong>{{ {'sedan':'سيدان','suv':'دفع رباعي','truck':'شاحنة','van':'باص صغير','pickup':'بيك أب','motorcycle':'دراجة نارية','other':'أخرى'}[listing.car_type] or listing.car_type }}</strong></div>{% endif %}
+                    {% if listing.car_year %}<div class="meta-item"><i class="fas fa-calendar-alt"></i><span>سنة الصنع</span><strong>{{ listing.car_year }}</strong></div>{% endif %}
+                    {% if listing.car_mileage is not none %}<div class="meta-item"><i class="fas fa-tachometer-alt"></i><span>المسافة</span><strong>{{ "{:,}".format(listing.car_mileage) }} كم</strong></div>{% endif %}
+                    {% if listing.car_fuel %}<div class="meta-item"><i class="fas fa-gas-pump"></i><span>الوقود</span><strong>{{ {'petrol':'بنزين','diesel':'ديزل','hybrid':'هايبرد','electric':'كهربائي'}[listing.car_fuel] or listing.car_fuel }}</strong></div>{% endif %}
+                    {% if listing.car_transmission %}<div class="meta-item"><i class="fas fa-cogs"></i><span>الناقل</span><strong>{{ {'manual':'عادي','automatic':'أوتوماتيك'}[listing.car_transmission] or listing.car_transmission }}</strong></div>{% endif %}
+                    {% if listing.cooling_type %}<div class="meta-item"><i class="fas fa-snowflake"></i><span>نوع التكييف</span><strong>{{ {'split':'سبلت','window':'شباك','central':'مركزي','duct':'قنوات','cassette':'كاست','chiller':'مبرد ماء','other':'أخرى'}[listing.cooling_type] or listing.cooling_type }}</strong></div>{% endif %}
+                    {% if listing.cooling_capacity %}<div class="meta-item"><i class="fas fa-thermometer-half"></i><span>السعة</span><strong>{{ listing.cooling_capacity }}</strong></div>{% endif %}
+                    {% if listing.cooling_brand %}<div class="meta-item"><i class="fas fa-tag"></i><span>الماركة</span><strong>{{ listing.cooling_brand }}</strong></div>{% endif %}
+                    {% if listing.cooling_service_type %}<div class="meta-item"><i class="fas fa-tools"></i><span>الخدمة</span><strong>{{ {'install':'تركيب جديد','repair':'صيانة وإصلاح','sales':'مبيعات فقط','install_repair':'تركيب وصيانة'}[listing.cooling_service_type] or listing.cooling_service_type }}</strong></div>{% endif %}
+                    {% if listing.appliance_type %}<div class="meta-item"><i class="fas fa-plug"></i><span>نوع الجهاز</span><strong>{{ {'refrigerator':'ثلاجة','washing_machine':'غسالة','air_conditioner':'مكيف','television':'تلفزيون','oven':'فرن','vacuum':'مكنسة','blender':'خلاط','heater':'سخان','dishwasher':'جلاية','microwave':'مايكرويف','iron':'مكواة','fan':'مروحة','water_purifier':'منقي مياه','other':'أخرى'}[listing.appliance_type] or listing.appliance_type }}</strong></div>{% endif %}
+                    {% if listing.appliance_brand %}<div class="meta-item"><i class="fas fa-tag"></i><span>الماركة</span><strong>{{ listing.appliance_brand }}</strong></div>{% endif %}
+                    {% if listing.appliance_condition %}<div class="meta-item"><i class="fas fa-shield-alt"></i><span>الحالة</span><strong>{{ {'new':'جديد','used_excellent':'ممتاز','used_good':'جيد','used_fair':'مقبول','refurbished':'مجدد'}[listing.appliance_condition] or listing.appliance_condition }}</strong></div>{% endif %}
+                    {% if listing.appliance_warranty %}<div class="meta-item"><i class="fas fa-certificate"></i><span>الضمان</span><strong>{{ listing.appliance_warranty }}</strong></div>{% endif %}
+                    <div class="meta-item"><i class="fas fa-eye"></i><span>المشاهدات</span><strong>{{ listing.views }}</strong></div>
+                </div>
+
+                {% if listing.description %}
+                <div class="detail-block">
+                    <h3><i class="fas fa-align-right"></i> الوصف</h3>
+                    <p class="detail-description">{{ listing.description }}</p>
+                </div>
+                {% endif %}
+
+                {% if listing.features %}
+                <div class="detail-block">
+                    <h3><i class="fas fa-star"></i> المميزات</h3>
+                    <div class="features-list">
+                        {% for feature in listing.features.split(',') %}
+                        <span class="feature-tag"><i class="fas fa-check"></i> {{ feature.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="detail-block">
+                    <h3><i class="fas fa-user"></i> معلومات المعلن</h3>
+                    <div class="seller-card">
+                        <div class="seller-avatar"><i class="fas fa-user-circle"></i></div>
+                        <div class="seller-info">
+                            <h4>{{ listing.author.name or 'المعلن' }}{% if listing.author.user_title %} <span class="user-title-badge">{{ listing.author.user_title }}</span>{% endif %}</h4>
+                            <p><i class="fas fa-phone"></i> {{ listing.author.phone }}</p>
+                            {% if listing.author.email %}<p><i class="fas fa-envelope"></i> {{ listing.author.email }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if current_user.is_authenticated and current_user.id == listing.user_id %}
+                <div class="detail-actions">
+                    <a href="{{ url_for('listings.edit', id=listing.id) }}" class="btn-outline"><i class="fas fa-edit"></i> تعديل</a>
+                    <form method="POST" action="{{ url_for('listings.delete', id=listing.id) }}" class="inline-form" onsubmit="return confirm('حذف الإعلان؟')">
+                        <button type="submit" class="btn-outline danger"><i class="fas fa-trash"></i> حذف</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Left: Gallery -->
+            <div class="detail-gallery">
+                {% if images %}
+                <div class="gallery-main">
+                    <img src="{{ url_for('static', filename=images[0].image_path) }}" alt="{{ listing.title }}" id="mainImage">
+                </div>
+                {% if images|length > 1 %}
+                <div class="gallery-thumbs">
+                    {% for img in images %}
+                    <img src="{{ url_for('static', filename=img.image_path) }}" alt="" onclick="document.getElementById('mainImage').src=this.src">
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="gallery-main no-image">
+                    <i class="fas fa-image"></i>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.detail-section { padding: 30px 0; background: var(--bg); min-height: calc(100vh - 140px); }
+.detail-breadcrumb { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; }
+.detail-breadcrumb a { color: var(--accent); }
+.detail-breadcrumb i { font-size: 10px; }
+
+.detail-layout { display: grid; grid-template-columns: 1fr 420px; gap: 24px; }
+
+.detail-info { display: flex; flex-direction: column; gap: 20px; }
+.detail-header { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.detail-header h1 { font-size: 22px; font-weight: 800; margin-bottom: 12px; line-height: 1.4; }
+.detail-price-row { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.detail-price { font-size: 24px; font-weight: 800; color: var(--accent); }
+.detail-type { padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.detail-type.sale { background: var(--danger); color: #fff; }
+.detail-type.rent { background: var(--info); color: #fff; }
+.detail-location { color: var(--text-muted); font-size: 14px; }
+.featured-badge { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; display: inline-flex; align-items: center; gap: 4px; }
+.user-title-badge { background: var(--primary-light); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
+.detail-meta-box { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+.meta-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; }
+.meta-item i { font-size: 18px; color: var(--accent); margin-bottom: 6px; display: block; }
+.meta-item span { font-size: 12px; color: var(--text-muted); display: block; }
+.meta-item strong { font-size: 15px; font-weight: 700; color: var(--text); }
+
+.detail-block { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.detail-block h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--accent); }
+.detail-description { font-size: 15px; line-height: 1.8; color: var(--text-muted); white-space: pre-line; }
+.features-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.feature-tag { background: var(--primary-light); border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-size: 13px; color: var(--text); }
+.feature-tag i { color: var(--success); margin-left: 4px; }
+
+.seller-card { display: flex; align-items: center; gap: 14px; }
+.seller-avatar { width: 48px; height: 48px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 22px; color: var(--accent); }
+.seller-info h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.seller-info p { font-size: 13px; color: var(--text-muted); margin-bottom: 2px; }
+.seller-info i { color: var(--accent); margin-left: 4px; }
+
+.detail-actions { display: flex; gap: 10px; }
+
+.detail-gallery { position: sticky; top: 100px; height: fit-content; }
+.gallery-main { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; height: 320px; display: flex; align-items: center; justify-content: center; }
+.gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-main.no-image { color: var(--text-muted); font-size: 60px; }
+.gallery-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+.gallery-thumbs img { width: 100%; height: 80px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+.gallery-thumbs img:hover { border-color: var(--accent); transform: scale(1.03); }
+
+@media (max-width: 1024px) {
+    .detail-layout { grid-template-columns: 1fr; }
+    .detail-gallery { position: static; }
+}
+@media (max-width: 768px) {
+    .gallery-main { height: 260px; }
+    .gallery-thumbs { grid-template-columns: repeat(3, 1fr); }
+    .detail-meta-box { grid-template-columns: repeat(2, 1fr); }
+    .detail-header h1 { font-size: 18px; }
+    .detail-price { font-size: 20px; }
+}
+</style>
+{% endblock %}

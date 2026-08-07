@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}تسجيل دخول الإدارة{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="container">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2>لوحة إدارة الموقع</h2>
+            <p class="auth-subtitle">تسجيل دخول الإدارة</p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form action="{{ url_for('admin.login') }}" method="POST" id="admin-login-form">
+                <div class="form-group">
+                    <label for="phone">رقم الهاتف</label>
+                    <div class="input-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                        <input type="tel" id="phone" name="phone" placeholder="07XXXXXXXXX" required autocomplete="tel" pattern="07[0-9]{9}">
+                    </div>
+                    <small class="form-hint">يجب أن يبدأ بـ 07 ويتكون من 11 رقماً</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember" id="remember">
+                        <span class="checkmark"></span>
+                        تذكرني
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i>
+                    دخول الإدارة
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <a href="{{ url_for('main.index') }}"><i class="fas fa-arrow-right"></i> العودة للرئيسية</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

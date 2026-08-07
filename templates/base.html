@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vision{% endblock %} | منصة فيجن العراق</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-inner">
+                <a href="{{ url_for('main.index') }}" class="logo">
+                    <i class="fas fa-gem"></i>
+                    <span>Vision</span>
+                </a>
+                
+                <nav class="header-nav" id="headerNav">
+                    <a href="{{ url_for('main.index') }}" class="{% if request.endpoint == 'main.index' %}active{% endif %}">الرئيسية</a>
+                    {% if current_user.is_authenticated and current_user.posting_scope == 'own_category' and current_user.user_type != 'user' %}
+                        {% set cat_slug = current_user.get_category_slug() %}
+                        {% if cat_slug %}
+                        <a href="{{ url_for('main.category_detail', slug=cat_slug) }}">{{ current_user.get_user_type_display() }}</a>
+                        {% endif %}
+                    {% else %}
+                    <a href="{{ url_for('listings.search') }}" class="{% if request.endpoint == 'listings.search' %}active{% endif %}">البحث</a>
+                    {% endif %}
+                    <a href="{{ url_for('listings.create') }}" class="{% if request.endpoint == 'listings.create' %}active{% endif %}">أضف إعلانك</a>
+                </nav>
+                
+                <div class="header-actions">
+                    {% if current_user.is_authenticated %}
+                    <div class="nav-dropdown" style="position:relative;display:inline-block;">
+                        <button class="btn-outline btn-sm" onclick="document.getElementById('userDropdown').classList.toggle('open')" style="gap:6px;">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ current_user.name or 'حسابي' }}</span>
+                            <i class="fas fa-chevron-down" style="font-size:10px;"></i>
+                        </button>
+                        <div id="userDropdown" class="dropdown-menu" style="display:none;position:absolute;top:100%;left:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 0;min-width:180px;z-index:200;box-shadow:var(--shadow);">
+                            <a href="{{ url_for('dashboard.index') }}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--text);font-size:13px;"><i class="fas fa-chart-line" style="color:var(--accent);width:18px;"></i> لوحة التحكم</a>
+                            <a href="{{ url_for('dashboard.my_listings') }}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--text);font-size:13px;"><i class="fas fa-list" style="color:var(--accent);width:18px;"></i> إعلاناتي</a>
+                            <a href="{{ url_for('dashboard.profile') }}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--text);font-size:13px;"><i class="fas fa-cog" style="color:var(--accent);width:18px;"></i> الإعدادات</a>
+                            {% if current_user.is_admin %}
+                            <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
+                            <a href="{{ url_for('admin.dashboard') }}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--accent);font-size:13px;font-weight:700;"><i class="fas fa-shield-alt" style="width:18px;"></i> إدارة المنصة</a>
+                            {% endif %}
+                            <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
+                            {% if session.get('admin') %}
+                            <a href="{{ url_for('admin.dashboard') }}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--accent);font-size:13px;"><i class="fas fa-shield-alt" style="width:18px;"></i> لوحة الإدارة</a>
+                            {% endif %}
+                            <a href="{{ url_for('auth.logout') }}" style="display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--danger);font-size:13px;"><i class="fas fa-sign-out-alt" style="width:18px;"></i> تسجيل الخروج</a>
+                        </div>
+                        <style>
+                            #userDropdown.open { display:block !important; }
+                            #userDropdown a:hover { background:var(--primary-light); }
+                        </style>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn-outline btn-sm">تسجيل الدخول</a>
+                    {% endif %}
+                    <button class="btn-icon" id="mobileMenuBtn" style="display:none;"><i class="fas fa-bars"></i></button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div style="position:fixed;top:20px;left:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;">
+        {% for category, message in messages %}
+        <div class="toast {{ category }}">
+            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'danger' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" style="background:none;border:none;color:inherit;cursor:pointer;font-size:18px;margin-right:8px;">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h2><i class="fas fa-gem"></i> Vision</h2>
+                    <p>منصة فيجن العراق - وجهتك الشاملة للخدمات المحلية. نسعى لبناء تجربة سلسة تربطك بكل ما تحتاجه في مدينتك.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>الأقسام</h4>
+                    <ul>
+                        <li><a href="{{ url_for('main.category_detail', slug='real-estate') }}">العقارات</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='restaurants') }}">المطاعم</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='pharmacies') }}">الصيدليات</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='markets') }}">الأسواق</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='workshops') }}">الورش</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='internet') }}">شركات الإنترنت</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='doctors') }}">الأطباء</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='services') }}">الخدمات</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='trades') }}">أصحاب المهن</a></li>
+                        <li><a href="{{ url_for('main.category_detail', slug='appliances') }}">الأجهزة الكهربائية</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>روابط سريعة</h4>
+                    <ul>
+                        <li><a href="{{ url_for('listings.create') }}">أضف إعلانك</a></li>
+                        <li><a href="{{ url_for('listings.search') }}">بحث متقدم</a></li>
+                        <li><a href="#">شروط الاستخدام</a></li>
+                        <li><a href="#">سياسة الخصوصية</a></li>
+                    </ul>
+                </div>
+                <div class="footer-links">
+                    <h4>تواصل معنا</h4>
+                    <ul>
+                        <li><a href="mailto:support@vision.iq"><i class="fas fa-envelope" style="margin-left:6px;color:var(--accent);"></i> support@vision.iq</a></li>
+                        <li><a href="tel:07833779833"><i class="fas fa-phone" style="margin-left:6px;color:var(--accent);"></i> 07833779833</a></li>
+                        <li><a href="https://wa.me/9647833779833" target="_blank"><i class="fab fa-whatsapp" style="margin-left:6px;color:#25D366;"></i> واتساب</a></li>
+                        <li><a href="#"><i class="fas fa-map-marker-alt" style="margin-left:6px;color:var(--accent);"></i> بغداد، العراق</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Vision Iraq. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Mobile menu toggle
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const nav = document.getElementById('headerNav');
+        if (mobileBtn && nav) {
+            if (window.innerWidth <= 768) mobileBtn.style.display = 'inline-flex';
+            window.addEventListener('resize', () => {
+                mobileBtn.style.display = window.innerWidth <= 768 ? 'inline-flex' : 'none';
+                if (window.innerWidth > 768) nav.classList.remove('open');
+            });
+            mobileBtn.addEventListener('click', () => {
+                nav.classList.toggle('open');
+            });
+        }
+        // Close dropdown on outside click
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown && !e.target.closest('.nav-dropdown')) {
+                dropdown.classList.remove('open');
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js').catch(console.error);
+      }
+    </script>
+</body>
+</html>

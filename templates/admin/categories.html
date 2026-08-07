@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}إدارة الأقسام{% endblock %}
+
+{% block content %}
+<section class="dashboard-section admin">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-tags"></i> إدارة الأقسام</h1>
+            <p>تفعيل أو تعطيل الأقسام المعروضة على الموقع</p>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الاسم</th>
+                            <th>Slug</th>
+                            <th>الأيقونة</th>
+                            <th>اللون</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td>{{ cat.id }}</td>
+                            <td>
+                                <strong>{{ cat.name_ar }}</strong><br>
+                                <small>{{ cat.description }}</small>
+                            </td>
+                            <td>{{ cat.slug }}</td>
+                            <td><i class="fas fa-{{ cat.icon }}"></i> {{ cat.icon }}</td>
+                            <td>
+                                <span style="display:inline-block;width:24px;height:24px;border-radius:4px;background:{{ cat.color }};vertical-align:middle;margin-left:6px;"></span>
+                                {{ cat.color }}
+                            </td>
+                            <td>
+                                {% if cat.is_active %}
+                                <span class="status-badge active">مفعل</span>
+                                {% else %}
+                                <span class="status-badge rejected">معطل</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.toggle_category', id=cat.id) }}" class="inline-form">
+                                    <button type="submit" class="btn-text {{ 'danger' if cat.is_active else 'success' }}">
+                                        {% if cat.is_active %}
+                                        <i class="fas fa-ban"></i> تعطيل
+                                        {% else %}
+                                        <i class="fas fa-check"></i> تفعيل
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

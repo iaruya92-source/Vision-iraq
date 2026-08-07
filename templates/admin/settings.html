@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}إعدادات المنصة{% endblock %}
+
+{% block content %}
+<section class="dashboard-section admin">
+    <div class="container">
+        <div class="admin-nav">
+            <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}"><i class="fas fa-chart-line"></i> لوحة التحكم</a>
+            <a href="{{ url_for('admin.listings') }}" class="{% if request.endpoint == 'admin.listings' %}active{% endif %}"><i class="fas fa-list"></i> الإعلانات</a>
+            <a href="{{ url_for('admin.users') }}" class="{% if request.endpoint == 'admin.users' %}active{% endif %}"><i class="fas fa-users"></i> المستخدمين</a>
+            <a href="{{ url_for('admin.settings') }}" class="{% if request.endpoint == 'admin.settings' %}active{% endif %}"><i class="fas fa-cogs"></i> الإعدادات</a>
+        </div>
+        <div class="admin-header">
+            <h1><i class="fas fa-cogs"></i> إعدادات المنصة</h1>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3><i class="fas fa-tags"></i> أسعار الاشتراكات الشهرية</h3>
+            </div>
+            <form method="POST" action="{{ url_for('admin.settings') }}">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>القسم</th>
+                                <th>الوصف</th>
+                                <th>مجاني / مدفوع</th>
+                                <th>السعر الشهري (د.ع)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cat in categories %}
+                            <tr>
+                                <td><strong>{{ cat.name_ar }}</strong></td>
+                                <td>{{ cat.description or '—' }}</td>
+                                <td>
+                                    <label class="checkbox-label" style="justify-content:center;">
+                                        <input type="checkbox" name="premium_{{ cat.id }}" {% if cat.is_premium %}checked{% endif %}>
+                                        <span>مدفوع</span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <input type="number" name="price_{{ cat.id }}" value="{{ cat.subscription_price|int }}" min="0" step="1000" style="width:140px;padding:8px 12px;background:var(--primary-light);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-actions" style="padding:20px;">
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ الإعدادات</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="dashboard-card" style="margin-top:24px;">
+            <div class="card-header">
+                <h3><i class="fas fa-sliders-h"></i> إعدادات عامة</h3>
+            </div>
+            <div style="padding:20px;">
+                <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="form-group">
+                        <label>سعر التمييز للإعلان (د.ع)</label>
+                        <input type="number" name="featured_price" value="{{ featured_price }}" min="0" step="1000" style="width:100%;padding:10px 14px;background:var(--primary-light);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);">
+                    </div>
+                    <div class="form-group">
+                        <label>مدة الفترة التجريبية (بالأيام)</label>
+                        <input type="number" name="trial_days" value="{{ trial_days }}" min="0" step="1" style="width:100%;padding:10px 14px;background:var(--primary-light);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);">
+                    </div>
+                </div>
+                <div class="form-actions" style="padding-top:16px;">
+                    <button type="submit" class="btn-primary"><i class="fas fa-save"></i> حفظ الإعدادات</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-card" style="margin-top:24px;">
+            <div class="card-header">
+                <h3><i class="fas fa-info-circle"></i> ملاحظات</h3>
+            </div>
+            <div style="padding:20px;">
+                <ul style="color:var(--text-muted);font-size:14px;line-height:2;">
+                    <li>الأقسام المجانية: يمكن لأي مستخدم عادي إضافة إعلانات بدون اشتراك.</li>
+                    <li>الأقسام المدفوعة: يُمنح المستخدم أسبوعاً مجانياً (Trial) ثم يجب الاشتراك شهرياً.</li>
+                    <li>أنواع المستخدمين المدفوعين: صاحب عقارات، طبيب، صيدلاني، ورشة عمل، صاحب سوق.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

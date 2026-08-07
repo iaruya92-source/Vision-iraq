@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% block title %}إضافة إعلان جديد{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="container">
+        <div class="form-header">
+            <h1><i class="fas fa-plus-circle"></i> إضافة إعلان جديد</h1>
+            <p>أضف تفاصيل إعلانك وسيتم مراجعته خلال وقت قصير</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('listings.create') }}" enctype="multipart/form-data" class="listing-form">
+            <div class="form-grid">
+                <!-- Basic Info -->
+                <div class="form-card">
+                    <h3><i class="fas fa-info-circle"></i> المعلومات الأساسية</h3>
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label>عنوان الإعلان *</label>
+                            <input type="text" name="title" placeholder="مثال: فيلا فاخرة في المنصور / مطعم للإيجار / صيدلية للبيع" required>
+                        </div>
+                        <div class="form-group">
+                            <label>القسم *</label>
+                            {% if categories|length == 1 %}
+                                <input type="hidden" name="category_id" value="{{ categories[0].id }}">
+                                <input type="text" value="{{ categories[0].name_ar }}" disabled class="form-control" style="background:#f8fafc;">
+                                <small style="color:#64748b;">محدد تلقائياً بناءً على نوع حسابك</small>
+                            {% else %}
+                            <select name="category_id" required>
+                                <option value="">اختر القسم</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name_ar }}</option>
+                                {% endfor %}
+                            </select>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع العرض *</label>
+                            <select name="listing_type" required>
+                                {% for val, label in listing_types %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>نوع العقار / الخدمة</label>
+                            <select name="property_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in property_types %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف التفصيلي *</label>
+                        <textarea name="description" rows="5" placeholder="اكتب وصفاً تفصيلياً للعقار..." required></textarea>
+                    </div>
+                </div>
+                
+                <!-- Price -->
+                <div class="form-card">
+                    <h3><i class="fas fa-tag"></i> السعر</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>السعر</label>
+                            <input type="number" name="price" placeholder="500000000">
+                        </div>
+                        <div class="form-group">
+                            <label>العملة</label>
+                            <select name="currency">
+                                <option value="IQD">دينار عراقي (IQD)</option>
+                                <option value="USD">دولار أمريكي (USD)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Details -->
+                <div class="form-card">
+                    <h3><i class="fas fa-ruler-combined"></i> التفاصيل</h3>
+                    <div class="form-row three-col">
+                        <div class="form-group">
+                            <label>المساحة (م²)</label>
+                            <input type="number" name="area" placeholder="200" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>عدد الغرف</label>
+                            <input type="number" name="rooms" placeholder="3">
+                        </div>
+                        <div class="form-group">
+                            <label>عدد الحمامات</label>
+                            <input type="number" name="bathrooms" placeholder="2">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Car Details -->
+                <div class="form-card" id="car-details-card" style="display:none;">
+                    <h3><i class="fas fa-car"></i> تفاصيل السيارة</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع السيارة</label>
+                            <select name="car_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in car_types %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>سنة الصنع</label>
+                            <input type="number" name="car_year" placeholder="2020" min="1950" max="2030">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المسافة المقطوعة (كم)</label>
+                            <input type="number" name="car_mileage" placeholder="50000">
+                        </div>
+                        <div class="form-group">
+                            <label>نوع الوقود</label>
+                            <select name="car_fuel">
+                                <option value="">اختر</option>
+                                <option value="petrol">بنزين</option>
+                                <option value="diesel">ديزل</option>
+                                <option value="hybrid">هايبرد</option>
+                                <option value="electric">كهربائي</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ناقل الحركة</label>
+                            <select name="car_transmission">
+                                <option value="">اختر</option>
+                                <option value="manual">عادي</option>
+                                <option value="automatic">أوتوماتيك</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cooling Details -->
+                <div class="form-card" id="cooling-details-card" style="display:none;">
+                    <h3><i class="fas fa-snowflake"></i> تفاصيل التبريد والتكييف</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع المكيف / الجهاز</label>
+                            <select name="cooling_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in cooling_types %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>السعة / الطن</label>
+                            <input type="text" name="cooling_capacity" placeholder="مثال: 1.5 طن / 3 طن">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الماركة</label>
+                            <input type="text" name="cooling_brand" placeholder="مثال: LG, Samsung, Carrier">
+                        </div>
+                        <div class="form-group">
+                            <label>نوع الخدمة</label>
+                            <select name="cooling_service_type">
+                                <option value="">اختر</option>
+                                {% for val, label in cooling_service_types %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Appliance Details -->
+                <div class="form-card" id="appliance-details-card" style="display:none;">
+                    <h3><i class="fas fa-plug"></i> تفاصيل الجهاز الكهربائي</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع الجهاز</label>
+                            <select name="appliance_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in appliance_types %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الشركة / الماركة</label>
+                            <select name="appliance_brand">
+                                <option value="">اختر الماركة</option>
+                                {% for val, label in appliance_brands %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الحالة</label>
+                            <select name="appliance_condition">
+                                <option value="">اختر الحالة</option>
+                                {% for val, label in appliance_conditions %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الضمان</label>
+                            <input type="text" name="appliance_warranty" placeholder="مثال: سنة كاملة / 6 أشهر / لا يوجد">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Featured Listing -->
+                <div class="form-card">
+                    <h3><i class="fas fa-star"></i> إعلان مميز</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="is_featured" id="is_featured">
+                            <strong>اجعل إعلاني مميزاً</strong>
+                        </label>
+                        <p class="form-hint">الإعلانات المميزة تظهر أولاً في نتائج البحث وعلى الصفحة الرئيسية. السعر: <strong>{{ featured_price }} دينار</strong> لمدة 7 أيام.</p>
+                    </div>
+                </div>
+                
+                <!-- Location -->
+                <div class="form-card">
+                    <h3><i class="fas fa-map-marker-alt"></i> الموقع</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المحافظة *</label>
+                            <select name="governorate" required>
+                                <option value="">اختر المحافظة</option>
+                                {% for gov in governorates %}
+                                <option value="{{ gov.name_ar }}">{{ gov.name_ar }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>القضاء / المنطقة</label>
+                            <input type="text" name="district" placeholder="المنصور">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المنطقة / الحي</label>
+                            <input type="text" name="area_zone" placeholder="14 رمضان">
+                        </div>
+                        <div class="form-group">
+                            <label>العنوان التفصيلي</label>
+                            <input type="text" name="address" placeholder="العنوان الكامل للعقار">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contact -->
+                <div class="form-card">
+                    <h3><i class="fas fa-phone"></i> بيانات التواصل</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>رقم الهاتف</label>
+                            <input type="tel" name="contact_phone" placeholder="{{ current_user.phone }}">
+                            <small>اتركه فارغاً لاستخدام رقمك المسجل</small>
+                        </div>
+                        <div class="form-group">
+                            <label>واتساب</label>
+                            <input type="tel" name="contact_whatsapp" placeholder="{{ current_user.phone }}">
+                            <small>اتركه فارغاً لاستخدام رقم الهاتف</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3" style="background:#e0f2fe;border-color:#0ea5e9;color:#0c4a6e;border-radius:12px;">
+                        <i class="fas fa-headset ms-2"></i>
+                        <strong>للاستفسار أو المساعدة:</strong> تواصل معنا على 
+                        <a href="tel:07833779833" style="color:#0c4a6e;font-weight:800;">07833779833</a>
+                        أو عبر <a href="https://wa.me/9647833779833" target="_blank" style="color:#0c4a6e;font-weight:800;"><i class="fab fa-whatsapp"></i> واتساب</a>
+                    </div>
+                </div>
+                
+                <!-- Images -->
+                <div class="form-card">
+                    <h3><i class="fas fa-images"></i> الصور</h3>
+                    <div class="form-group">
+                        <label>اختر الصور (يمكنك رفع أكثر من صورة)</label>
+                        <div class="file-upload" id="fileUpload">
+                            <input type="file" name="images" id="images" multiple accept="image/*">
+                            <div class="file-upload-content">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>اسحب الصور هنا أو انقر للاختيار</p>
+                                <small>PNG, JPG, JPEG, WEBP - حتى 10 صور</small>
+                            </div>
+                        </div>
+                        <div class="image-preview" id="imagePreview"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary btn-lg">
+                    <i class="fas fa-paper-plane"></i> نشر الإعلان
+                </button>
+                <a href="{{ url_for('main.index') }}" class="btn-outline">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</section>
+
+<script>
+// Image preview
+document.getElementById('images').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    for (let file of e.target.files) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const div = document.createElement('div');
+            div.className = 'preview-item';
+            div.innerHTML = `<img src="${event.target.result}"><span>${file.name}</span>`;
+            preview.appendChild(div);
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+// Show/hide car details based on category selection
+(function(){
+    const catSelect = document.querySelector('select[name="category_id"]');
+    const carCard = document.getElementById('car-details-card');
+    const coolingCard = document.getElementById('cooling-details-card');
+    if(!catSelect) return;
+    const carCategoryIds = [];
+    const coolingCategoryIds = [];
+    const applianceCategoryIds = [];
+    // Find category ids from options text
+    for(let opt of catSelect.options){
+        if(opt.textContent.includes('سيارات') || opt.textContent.includes('مركبات')){
+            carCategoryIds.push(opt.value);
+        }
+        if(opt.textContent.includes('تبريد') || opt.textContent.includes('تكييف') || opt.textContent.includes('cooling')){
+            coolingCategoryIds.push(opt.value);
+        }
+        if(opt.textContent.includes('أجهزة') || opt.textContent.includes('كهربائية') || opt.textContent.includes('appliance')){
+            applianceCategoryIds.push(opt.value);
+        }
+    }
+    const applianceCard = document.getElementById('appliance-details-card');
+    function toggleCards(){
+        if(carCard) carCard.style.display = carCategoryIds.includes(catSelect.value) ? '' : 'none';
+        if(coolingCard) coolingCard.style.display = coolingCategoryIds.includes(catSelect.value) ? '' : 'none';
+        if(applianceCard) applianceCard.style.display = applianceCategoryIds.includes(catSelect.value) ? '' : 'none';
+    }
+    catSelect.addEventListener('change', toggleCards);
+    toggleCards();
+})();
+</script>
+{% endblock %}

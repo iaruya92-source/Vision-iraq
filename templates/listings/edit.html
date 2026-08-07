@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% block title %}تعديل إعلان{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="container">
+        <div class="form-header">
+            <h1><i class="fas fa-edit"></i> تعديل إعلان</h1>
+        </div>
+        
+        <form method="POST" action="{{ url_for('listings.edit', id=listing.id) }}" enctype="multipart/form-data" class="listing-form">
+            <div class="form-grid">
+                <div class="form-card">
+                    <h3><i class="fas fa-info-circle"></i> المعلومات الأساسية</h3>
+                    <div class="form-row">
+                        <div class="form-group full">
+                            <label>عنوان الإعلان *</label>
+                            <input type="text" name="title" value="{{ listing.title }}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع العرض *</label>
+                            <select name="listing_type" required>
+                                {% for val, label in listing_types %}
+                                <option value="{{ val }}" {% if listing.listing_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>نوع العقار</label>
+                            <select name="property_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in property_types %}
+                                <option value="{{ val }}" {% if listing.property_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف التفصيلي *</label>
+                        <textarea name="description" rows="5" required>{{ listing.description }}</textarea>
+                    </div>
+                </div>
+                
+                <div class="form-card">
+                    <h3><i class="fas fa-tag"></i> السعر</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>السعر *</label>
+                            <input type="number" name="price" value="{{ listing.price }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>العملة</label>
+                            <select name="currency">
+                                <option value="IQD" {% if listing.currency == 'IQD' %}selected{% endif %}>دينار عراقي (IQD)</option>
+                                <option value="USD" {% if listing.currency == 'USD' %}selected{% endif %}>دولار أمريكي (USD)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-card">
+                    <h3><i class="fas fa-ruler-combined"></i> التفاصيل</h3>
+                    <div class="form-row three-col">
+                        <div class="form-group">
+                            <label>المساحة (م²)</label>
+                            <input type="number" name="area" value="{{ listing.area or '' }}" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>عدد الغرف</label>
+                            <input type="number" name="rooms" value="{{ listing.rooms or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>عدد الحمامات</label>
+                            <input type="number" name="bathrooms" value="{{ listing.bathrooms or '' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Car Details -->
+                <div class="form-card" id="car-details-card" {% if not listing or not listing.category or listing.category.slug != 'cars' %}style="display:none;"{% endif %}>
+                    <h3><i class="fas fa-car"></i> تفاصيل السيارة</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع السيارة</label>
+                            <select name="car_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in car_types %}
+                                <option value="{{ val }}" {% if listing and listing.car_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>سنة الصنع</label>
+                            <input type="number" name="car_year" value="{{ listing.car_year or '' }}" min="1950" max="2030">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المسافة المقطوعة (كم)</label>
+                            <input type="number" name="car_mileage" value="{{ listing.car_mileage or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>نوع الوقود</label>
+                            <select name="car_fuel">
+                                <option value="">اختر</option>
+                                <option value="petrol" {% if listing and listing.car_fuel == 'petrol' %}selected{% endif %}>بنزين</option>
+                                <option value="diesel" {% if listing and listing.car_fuel == 'diesel' %}selected{% endif %}>ديزل</option>
+                                <option value="hybrid" {% if listing and listing.car_fuel == 'hybrid' %}selected{% endif %}>هايبرد</option>
+                                <option value="electric" {% if listing and listing.car_fuel == 'electric' %}selected{% endif %}>كهربائي</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ناقل الحركة</label>
+                            <select name="car_transmission">
+                                <option value="">اختر</option>
+                                <option value="manual" {% if listing and listing.car_transmission == 'manual' %}selected{% endif %}>عادي</option>
+                                <option value="automatic" {% if listing and listing.car_transmission == 'automatic' %}selected{% endif %}>أوتوماتيك</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cooling Details -->
+                <div class="form-card" id="cooling-details-card" {% if not listing or not listing.category or listing.category.slug != 'cooling' %}style="display:none;"{% endif %}>
+                    <h3><i class="fas fa-snowflake"></i> تفاصيل التبريد والتكييف</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع المكيف / الجهاز</label>
+                            <select name="cooling_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in cooling_types %}
+                                <option value="{{ val }}" {% if listing and listing.cooling_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>السعة / الطن</label>
+                            <input type="text" name="cooling_capacity" value="{{ listing.cooling_capacity or '' }}" placeholder="مثال: 1.5 طن / 3 طن">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الماركة</label>
+                            <input type="text" name="cooling_brand" value="{{ listing.cooling_brand or '' }}" placeholder="مثال: LG, Samsung, Carrier">
+                        </div>
+                        <div class="form-group">
+                            <label>نوع الخدمة</label>
+                            <select name="cooling_service_type">
+                                <option value="">اختر</option>
+                                {% for val, label in cooling_service_types %}
+                                <option value="{{ val }}" {% if listing and listing.cooling_service_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appliance Details -->
+                <div class="form-card" id="appliance-details-card" {% if not listing or not listing.category or listing.category.slug != 'appliances' %}style="display:none;"{% endif %}>
+                    <h3><i class="fas fa-plug"></i> تفاصيل الجهاز الكهربائي</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع الجهاز</label>
+                            <select name="appliance_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in appliance_types %}
+                                <option value="{{ val }}" {% if listing and listing.appliance_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الشركة / الماركة</label>
+                            <select name="appliance_brand">
+                                <option value="">اختر الماركة</option>
+                                {% for val, label in appliance_brands %}
+                                <option value="{{ val }}" {% if listing and listing.appliance_brand == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الحالة</label>
+                            <select name="appliance_condition">
+                                <option value="">اختر الحالة</option>
+                                {% for val, label in appliance_conditions %}
+                                <option value="{{ val }}" {% if listing and listing.appliance_condition == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الضمان</label>
+                            <input type="text" name="appliance_warranty" value="{{ listing.appliance_warranty or '' }}" placeholder="مثال: سنة كاملة / 6 أشهر / لا يوجد">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>نوع السيارة</label>
+                            <select name="car_type">
+                                <option value="">اختر النوع</option>
+                                {% for val, label in car_types %}
+                                <option value="{{ val }}" {% if listing and listing.car_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>سنة الصنع</label>
+                            <input type="number" name="car_year" value="{{ listing.car_year or '' }}" min="1950" max="2030">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المسافة المقطوعة (كم)</label>
+                            <input type="number" name="car_mileage" value="{{ listing.car_mileage or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>نوع الوقود</label>
+                            <select name="car_fuel">
+                                <option value="">اختر</option>
+                                <option value="petrol" {% if listing and listing.car_fuel == 'petrol' %}selected{% endif %}>بنزين</option>
+                                <option value="diesel" {% if listing and listing.car_fuel == 'diesel' %}selected{% endif %}>ديزل</option>
+                                <option value="hybrid" {% if listing and listing.car_fuel == 'hybrid' %}selected{% endif %}>هايبرد</option>
+                                <option value="electric" {% if listing and listing.car_fuel == 'electric' %}selected{% endif %}>كهربائي</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ناقل الحركة</label>
+                            <select name="car_transmission">
+                                <option value="">اختر</option>
+                                <option value="manual" {% if listing and listing.car_transmission == 'manual' %}selected{% endif %}>عادي</option>
+                                <option value="automatic" {% if listing and listing.car_transmission == 'automatic' %}selected{% endif %}>أوتوماتيك</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-card">
+                    <h3><i class="fas fa-map-marker-alt"></i> الموقع</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المحافظة *</label>
+                            <select name="governorate" required>
+                                <option value="">اختر المحافظة</option>
+                                {% for gov in governorates %}
+                                <option value="{{ gov.name_ar }}" {% if listing.governorate == gov.name_ar %}selected{% endif %}>{{ gov.name_ar }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>القضاء / المنطقة</label>
+                            <input type="text" name="district" value="{{ listing.district or '' }}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المنطقة / الحي</label>
+                            <input type="text" name="area_zone" value="{{ listing.area_zone or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>العنوان التفصيلي</label>
+                            <input type="text" name="address" value="{{ listing.address or '' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-card">
+                    <h3><i class="fas fa-phone"></i> بيانات التواصل</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>رقم الهاتف</label>
+                            <input type="tel" name="contact_phone" value="{{ listing.contact_phone }}">
+                        </div>
+                        <div class="form-group">
+                            <label>واتساب</label>
+                            <input type="tel" name="contact_whatsapp" value="{{ listing.contact_whatsapp or '' }}">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Current Images -->
+                <div class="form-card">
+                    <h3><i class="fas fa-images"></i> الصور الحالية</h3>
+                    <div class="current-images">
+                        {% for img in listing.images %}
+                        <div class="current-image">
+                            <img src="{{ url_for('static', filename=img.image_path) }}">
+                            <form method="POST" action="{{ url_for('listings.delete_image', id=listing.id, image_id=img.id) }}" class="delete-img-form">
+                                <button type="submit" class="btn-delete-img" onclick="return confirm('حذف الصورة؟')"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="form-card">
+                    <h3><i class="fas fa-images"></i> إضافة صور جديدة</h3>
+                    <div class="form-group">
+                        <div class="file-upload">
+                            <input type="file" name="images" multiple accept="image/*">
+                            <div class="file-upload-content">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>اختر صوراً جديدة لإضافتها</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary btn-lg">
+                    <i class="fas fa-save"></i> حفظ التغييرات
+                </button>
+                <a href="{{ url_for('listings.detail', id=listing.id) }}" class="btn-outline">إلغاء</a>
+            </div>
+        </form>
+        
+        <!-- Featured toggle forms -->
+        {% if listing.user_id == current_user.id or current_user.is_admin %}
+        <div class="form-actions mt-4" style="margin-top:2rem;">
+            {% if not listing.is_featured %}
+            <form method="POST" action="{{ url_for('listings.make_featured', id=listing.id) }}" style="display:inline;">
+                <button type="submit" class="btn-warning btn-lg" onclick="return confirm('تمييز الإعلان كمميز؟ سيتم خصم الرسم من رصيدك.')">
+                    <i class="fas fa-star"></i> تمييز كإعلان مميز
+                </button>
+            </form>
+            {% else %}
+            <div class="alert alert-success">
+                <i class="fas fa-star"></i> هذا الإعلان مميز حتى {{ listing.featured_until.strftime('%Y-%m-%d') }}
+            </div>
+            {% endif %}
+            {% if current_user.is_admin %}
+            <form method="POST" action="{{ url_for('listings.remove_featured', id=listing.id) }}" style="display:inline;margin-right:1rem;">
+                <button type="submit" class="btn-outline" onclick="return confirm('إلغاء التمييز المميز؟')">
+                    <i class="fas fa-times"></i> إلغاء التمييز (أدمن)
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+        </form>
+    </div>
+</section>
+{% endblock %}

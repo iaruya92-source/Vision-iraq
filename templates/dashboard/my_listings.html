@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}إعلاناتي{% endblock %}
+
+{% block content %}
+<section class="dashboard-section">
+    <div class="container">
+        {% if sub_alert %}
+        <div class="sub-alert {{ sub_alert.type }}">
+            <div class="sub-alert-icon"><i class="fas {{ sub_alert.icon }}"></i></div>
+            <div class="sub-alert-body">
+                <strong>{{ sub_alert.title }}</strong>
+                <p>{{ sub_alert.message }}</p>
+            </div>
+            {% if sub_alert.type in ('danger','warning') %}
+            <a href="https://wa.me/9647833779833?text=مرحباً%20أريد%20تجديد%20الاشتراك%20-{{ current_user.phone }}" target="_blank" class="btn btn-success btn-sm" style="white-space:nowrap;">
+                <i class="fab fa-whatsapp"></i> تواصل مع الإدارة
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        <div class="dashboard-header">
+            <h1><i class="fas fa-list"></i> إعلاناتي</h1>
+            <a href="{{ url_for('listings.create') }}" class="btn-primary"><i class="fas fa-plus"></i> إعلان جديد</a>
+        </div>
+        
+        {% if listings %}
+        <div class="dashboard-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الإعلان</th>
+                            <th>النوع</th>
+                            <th>السعر</th>
+                            <th>الحالة</th>
+                            <th>المشاهدات</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in listings %}
+                        <tr>
+                            <td>
+                                <div class="table-item">
+                                    {% if item.main_image %}
+                                    <img src="{{ url_for('static', filename=item.main_image.image_path) }}" class="table-thumb">
+                                    {% else %}
+                                    <div class="table-thumb no-thumb"><i class="fas fa-image"></i></div>
+                                    {% endif %}
+                                    <span>{{ item.title[:50] }}{% if item.title|length > 50 %}...{% endif %}{% if item.is_featured %} <span class="featured-inline"><i class="fas fa-star"></i></span>{% endif %}</span>
+                                </div>
+                            </td>
+                            <td>{{ {'sale':'للبيع','rent':'للإيجار','investment':'للاستثمار'}[item.listing_type] or item.listing_type }}</td>
+                            <td>{{ "{:,.0f}".format(item.price) }} {{ item.currency }}</td>
+                            <td><span class="status-badge {{ item.status }}">{{ {'pending':'قيد المراجعة','active':'نشط','rejected':'مرفوض','sold':'مباع','rented':'مؤجر'}[item.status] or item.status }}</span></td>
+                            <td>{{ item.views }}</td>
+                            <td>{{ item.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="{{ url_for('listings.detail', id=item.id) }}" class="btn-icon" title="عرض"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ url_for('listings.edit', id=item.id) }}" class="btn-icon" title="تعديل"><i class="fas fa-edit"></i></a>
+                                    <form method="POST" action="{{ url_for('listings.delete', id=item.id) }}" class="inline-form" onsubmit="return confirm('هل تريد حذف هذا الإعلان؟')">
+                                        <button type="submit" class="btn-icon danger" title="حذف"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox"></i>
+            <h2>لا توجد إعلانات</h2>
+            <p>ابدأ بإضافة إعلانك العقاري الأول</p>
+            <a href="{{ url_for('listings.create') }}" class="btn-primary"><i class="fas fa-plus"></i> إعلان جديد</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

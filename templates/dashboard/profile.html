@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}الملف الشخصي{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="container">
+        <div class="form-header">
+            <h1><i class="fas fa-user"></i> الملف الشخصي</h1>
+        </div>
+        
+        <!-- Trial Banner -->
+        {% if current_user.trial_end and current_user.trial_end > now() %}
+        <div class="trial-banner">
+            <i class="fas fa-clock"></i>
+            <span>أنت في فترة التجربة المجانية — تنتهي بعد {{ ((current_user.trial_end - now()).days) }} يوم ({{ current_user.trial_end.strftime('%Y-%m-%d') }})</span>
+        </div>
+        {% elif current_user.trial_end and current_user.trial_end <= now() %}
+        <div class="trial-banner expired">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>فترة التجربة المجانية انتهت — يرجى الاشتراك للاستمرار</span>
+        </div>
+        {% endif %}
+        
+        <div class="profile-layout">
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="profile-info">
+                    <h2>{{ current_user.name or 'المستخدم' }}</h2>
+                    <p class="profile-phone"><i class="fas fa-phone"></i> {{ current_user.phone }}</p>
+                    {% if current_user.user_title %}
+                    <span class="title-badge">{{ current_user.user_title }}</span>
+                    {% endif %}
+                    <span class="role-badge {{ 'admin' if current_user.is_admin else 'user' }}">{{ 'مسؤول' if current_user.is_admin else 'مستخدم' }}</span>
+                    {% if not current_user.is_admin %}
+                    <span class="status-badge {{ 'active' if current_user.is_active_account else 'inactive' }}">{{ 'حساب نشط' if current_user.is_active_account else 'حساب معطل' }}</span>
+                    {% endif %}
+                    {% if current_user.show_in_all %}
+                    <span class="show-in-all-badge"><i class="fas fa-globe"></i> ظاهر للجميع</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="profile-form">
+                <form method="POST" action="{{ url_for('dashboard.profile') }}">
+                    <div class="form-card">
+                        <h3><i class="fas fa-user-edit"></i> تحديث البيانات</h3>
+                        <div class="form-group">
+                            <label>الاسم الكامل</label>
+                            <input type="text" name="name" value="{{ current_user.name or '' }}" placeholder="أدخل اسمك الكامل">
+                        </div>
+                        <div class="form-group">
+                            <label>البريد الإلكتروني</label>
+                            <input type="email" name="email" value="{{ current_user.email or '' }}" placeholder="example@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الهاتف</label>
+                            <input type="tel" value="{{ current_user.phone }}" disabled>
+                            <small>لا يمكن تغيير رقم الهاتف</small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i> حفظ التغييرات
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.trial-banner { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.trial-banner.expired { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.trial-banner i { font-size: 18px; }
+
+.title-badge { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; margin-top: 6px; }
+.status-badge { padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; display: inline-block; margin-top: 6px; }
+.status-badge.active { background: var(--success); color: #fff; }
+.status-badge.inactive { background: var(--danger); color: #fff; }
+.show-in-all-badge { background: linear-gradient(135deg, #10b981, #059669); color: #fff; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; }
+
+.profile-info { display: flex; flex-direction: column; align-items: center; }
+</style>
+{% endblock %}

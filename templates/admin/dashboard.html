@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}لوحة إدارة الموقع{% endblock %}
+
+{% block content %}
+<section class="dashboard-section admin">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-shield-alt"></i> لوحة الإدارة</h1>
+            <p>نظرة عامة على أداء الموقع والنشاط</p>
+        </div>
+        
+        <div class="stats-grid admin">
+            <div class="stat-card blue">
+                <div class="stat-icon"><i class="fas fa-list"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats['listings'] }}</span>
+                    <span class="stat-label">إجمالي الإعلانات</span>
+                </div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats['active'] }}</span>
+                    <span class="stat-label">الإعلانات النشطة</span>
+                </div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats['pending'] }}</span>
+                    <span class="stat-label">قيد المراجعة</span>
+                </div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats['users'] }}</span>
+                    <span class="stat-label">المستخدمين</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-card" style="margin-bottom:24px;">
+            <div class="card-header">
+                <h3><i class="fas fa-bolt"></i> روابط الإدارة السريعة</h3>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+                <a href="{{ url_for('admin.listings') }}" class="btn-outline" style="text-align:center;"><i class="fas fa-list"></i> الإعلانات</a>
+                <a href="{{ url_for('admin.users') }}" class="btn-outline" style="text-align:center;"><i class="fas fa-users"></i> المستخدمين</a>
+                <a href="{{ url_for('admin.categories') }}" class="btn-outline" style="text-align:center;"><i class="fas fa-tags"></i> الأقسام</a>
+                <a href="{{ url_for('admin.governorates') }}" class="btn-outline" style="text-align:center;"><i class="fas fa-map-marker-alt"></i> المحافظات</a>
+                <a href="{{ url_for('admin.settings') }}" class="btn-outline" style="text-align:center;"><i class="fas fa-cog"></i> الإعدادات</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-clock"></i> إعلانات قيد المراجعة</h3>
+                    <a href="{{ url_for('admin.listings') }}" class="btn-text">عرض الكل</a>
+                </div>
+                {% if pending_listings %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الإعلان</th>
+                                <th>المستخدم</th>
+                                <th>السعر</th>
+                                <th>التاريخ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in pending_listings %}
+                            <tr>
+                                <td>{{ item.title[:40] }}</td>
+                                <td>{{ item.owner.phone }}</td>
+                                <td>{{ "{:,.0f}".format(item.price) }} {{ item.currency }}</td>
+                                <td>{{ item.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a href="{{ url_for('listings.detail', id=item.id) }}" class="btn-icon" title="عرض"><i class="fas fa-eye"></i></a>
+                                        <form method="POST" action="{{ url_for('admin.approve_listing', id=item.id) }}" class="inline-form">
+                                            <button type="submit" class="btn-icon success" title="موافقة"><i class="fas fa-check"></i></button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('admin.reject_listing', id=item.id) }}" class="inline-form">
+                                            <button type="submit" class="btn-icon danger" title="رفض"><i class="fas fa-times"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="empty-text">لا توجد إعلانات قيد المراجعة</p>
+                {% endif %}
+            </div>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-users"></i> أحدث المستخدمين</h3>
+                    <a href="{{ url_for('admin.users') }}" class="btn-text">عرض الكل</a>
+                </div>
+                {% if recent_users %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الهاتف</th>
+                                <th>الاسم</th>
+                                <th>الإعلانات</th>
+                                <th>تاريخ التسجيل</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in recent_users %}
+                            <tr>
+                                <td>{{ user.phone }}</td>
+                                <td>{{ user.name or '—' }}</td>
+                                <td>{{ user.listings.count() }}</td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="empty-text">لا يوجد مستخدمين</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

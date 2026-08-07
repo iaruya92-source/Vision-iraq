@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}إدارة المستخدمين{% endblock %}
+
+{% block content %}
+<section class="dashboard-section admin">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-users"></i> إدارة المستخدمين</h1>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الهاتف</th>
+                            <th>الاسم</th>
+                            <th>البريد</th>
+                            <th>الإعلانات</th>
+                            <th>النوع</th>
+                            <th>اللقب</th>
+                            <th>الدور</th>
+                            <th>الحالة</th>
+                            <th>الاشتراك</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.phone }}</td>
+                            <td>{{ user.name or '—' }}</td>
+                            <td>{{ user.email or '—' }}</td>
+                            <td>{{ user.listings.count() }}</td>
+                            <td>
+                                <span class="role-badge {{ user.user_type }}">
+                                    {{ {'user':'مستخدم','realtor':'عقارات','doctor':'طبيب','pharmacist':'صيدلاني','workshop':'ورشة','market_owner':'سوق','car_dealer':'تاجر سيارات'}[user.user_type] or user.user_type }}
+                                </span>
+                            </td>
+                            <td>{{ user.user_title or '—' }}</td>
+                            <td>
+                                <span class="role-badge {{ 'admin' if user.is_admin else 'user' }}">
+                                    {{ 'مسؤول' if user.is_admin else 'مستخدم' }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.is_active_account %}
+                                    <span class="status-badge active">نشط</span>
+                                {% else %}
+                                    <span class="status-badge rejected">محظور</span>
+                                {% endif %}
+                                {% if user.trial_end %}
+                                    <span class="status-badge pending">تجريبي</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.user_type != 'user' %}
+                                    {% set sub_label = {'trial':'تجريبي','active':'نشط','grace':'سماح','expired':'منتهي'} %}
+                                    {% set sub_cls = {'trial':'pending','active':'active','grace':'warning','expired':'rejected'} %}
+                                    <span class="status-badge {{ sub_cls.get(user.subscription_status, 'secondary') }}">
+                                        {{ sub_label.get(user.subscription_status, '—') }}
+                                    </span>
+                                    {% if user.subscription_expiry %}
+                                        <small class="d-block text-muted">{{ user.subscription_expiry.strftime('%Y-%m-%d') }}</small>
+                                    {% endif %}
+                                    {% if user.grace_period_end %}
+                                        <small class="d-block text-muted">سماح: {{ user.grace_period_end.strftime('%Y-%m-%d') }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="status-badge secondary">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="table-actions">
+                                    {% if user.id != current_user.id %}
+                                    <form method="POST" action="{{ url_for('admin.toggle_admin', id=user.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon {{ 'warning' if user.is_admin else 'success' }}" title="{{ 'إلغاء الصلاحية' if user.is_admin else 'جعل مسؤول' }}">
+                                            <i class="fas fa-user-{{ 'shield' if user.is_admin else 'plus' }}"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.toggle_user_active', id=user.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon {{ 'success' if not user.is_active_account else 'danger' }}" title="{{ 'تفعيل' if not user.is_active_account else 'حظر' }}">
+                                            <i class="fas fa-{{ 'check' if not user.is_active_account else 'ban' }}"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.toggle_show_all', id=user.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon {{ 'info' if user.show_in_all else 'secondary' }}" title="{{ 'إظهار في الكل' if user.show_in_all else 'إخفاء من الكل' }}">
+                                            <i class="fas fa-{{ 'globe' if user.show_in_all else 'eye-slash' }}"></i>
+                                        </button>
+                                    </form>
+                                    {% if user.user_type != 'user' %}
+                                    <a href="#subModal{{ user.id }}" class="btn-icon success" title="إدارة الاشتراك" onclick="document.getElementById('subModal{{ user.id }}').style.display='block';return false;">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </a>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('admin.delete_user', id=user.id) }}" class="inline-form" onsubmit="return confirm('هل أنت متأكد من حذف المستخدم؟ سيتم حذف جميع إعلاناته أيضاً!');">
+                                        <button type="submit" class="btn-icon danger" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% for user in users %}
+{% if user.user_type != 'user' %}
+<div id="subModal{{ user.id }}" class="modal" style="display:none;position:fixed;z-index:9999;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,0.5);" onclick="if(event.target==this)this.style.display='none';">
+    <div class="modal-content" style="background:#fff;margin:10% auto;padding:24px;border-radius:12px;max-width:420px;direction:rtl;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">إدارة اشتراك: {{ user.name or user.phone }}</h3>
+            <button type="button" class="btn-icon secondary" onclick="document.getElementById('subModal{{ user.id }}').style.display='none';"><i class="fas fa-times"></i></button>
+        </div>
+        <p style="margin-bottom:12px;">
+            الحالة الحالية:
+            <strong>{{ {'trial':'تجريبي','active':'نشط','grace':'سماح','expired':'منتهي'}.get(user.subscription_status, '—') }}</strong>
+            {% if user.subscription_expiry %}
+                <br><small>ينتهي: {{ user.subscription_expiry.strftime('%Y-%m-%d') }}</small>
+            {% endif %}
+            {% if user.grace_period_end %}
+                <br><small>سماح حتى: {{ user.grace_period_end.strftime('%Y-%m-%d') }}</small>
+            {% endif %}
+        </p>
+        <form method="POST" action="{{ url_for('admin.update_subscription', id=user.id) }}" style="margin-bottom:10px;">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+                <select name="action" class="form-control" style="flex:1;">
+                    <option value="activate">تفعيل جديد</option>
+                    <option value="extend">تمديد</option>
+                    <option value="cancel">إلغاء</option>
+                </select>
+                <input type="number" name="days" class="form-control" placeholder="أيام" min="1" style="width:90px;" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">حفظ</button>
+        </form>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+            <form method="POST" action="{{ url_for('admin.start_grace_period', id=user.id) }}" style="flex:1;">
+                <input type="hidden" name="grace_days" value="10">
+                <button type="submit" class="btn btn-warning btn-block">فترة سماح (10)</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.expire_subscription', id=user.id) }}" style="flex:1;">
+                <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('تأكيد إنهاء الاشتراك؟');">إنهاء فوري</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}

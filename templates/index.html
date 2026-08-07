@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}الرئيسية{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-star"></i>
+                <span>منصة فيجن العراق</span>
+            </div>
+            <h1>كل الخدمات المحلية<br><span class="gradient-text">في مكان واحد</span></h1>
+            <p class="hero-desc">اكتشف العقارات، المطاعم، الصيدليات، الأطباء، وخدمات المدينة. منصة موثوقة مصممة خصيصاً للعراق.</p>
+            
+            <div class="hero-search">
+                <form action="{{ url_for('listings.search') }}" method="GET">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="q" placeholder="ابحث عن عقار، مطعم، خدمة أو منطقة...">
+                        <button type="submit" class="btn-primary">بحث</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-num">{{ total_listings }}+</span>
+                    <span class="stat-label">إعلان متاح</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-num">10</span>
+                    <span class="stat-label">قسم نشط</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-num">24/7</span>
+                    <span class="stat-label">دعم مستمر</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="hero-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="categories-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">الأقسام</span>
+            <h2>اكتشف خدماتنا</h2>
+            <p>منصة متكاملة تجمع كل ما تحتاجه في مكان واحد</p>
+        </div>
+        
+        <div class="categories-grid">
+            {% for cat in categories %}
+            <a href="{{ url_for('main.category_detail', slug=cat.slug) }}" 
+               class="category-card active">
+                <div class="category-icon" style="background: {{ cat.color }}15; color: {{ cat.color }}">
+                    <i class="fas fa-{{ cat.icon }}"></i>
+                </div>
+                <h3>{{ cat.name_ar }}</h3>
+                <p>{{ cat.description }}</p>
+                <span class="active-badge">متاح الآن</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Listings -->
+{% if featured %}
+<section class="listings-section featured-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">مميز</span>
+            <h2>إعلانات مميزة</h2>
+            <p>أفضل العروض المختارة لك من جميع الأقسام</p>
+        </div>
+        
+        <div class="listings-grid">
+            {% for item in featured %}
+            <div class="listing-card">
+                <a href="{{ url_for('listings.detail', id=item.id) }}" class="listing-image">
+                    {% if item.main_image %}
+                    <img src="{{ url_for('static', filename=item.main_image.image_path) }}" alt="{{ item.title }}">
+                    {% else %}
+                    <div class="no-image"><i class="fas fa-image"></i></div>
+                    {% endif %}
+                    {% if item.category %}
+                    <span class="listing-category" style="background:{{ item.category.color }};color:white;">
+                        {{ item.category.name_ar }}
+                    </span>
+                    {% endif %}
+                    {% if item.listing_type %}
+                    <span class="listing-type {{ item.listing_type }}">
+                        {{ 'للبيع' if item.listing_type == 'sale' else 'للإيجار' }}
+                    </span>
+                    {% endif %}
+                    {% if item.is_featured %}
+                    <span class="featured-badge"><i class="fas fa-crown"></i> مميز</span>
+                    {% endif %}
+                </a>
+                <div class="listing-body">
+                    {% if item.price %}
+                    <div class="listing-price">
+                        <span class="price">{{ "{:,.0f}".format(item.price) }} <small>{{ item.currency }}</small></span>
+                    </div>
+                    {% endif %}
+                    <h3 class="listing-title"><a href="{{ url_for('listings.detail', id=item.id) }}">{{ item.title }}</a></h3>
+                    <p class="listing-location"><i class="fas fa-map-marker-alt"></i> {{ item.governorate }}{% if item.district %} - {{ item.district }}{% endif %}</p>
+                    <div class="listing-meta">
+                        {% if item.area %}<span><i class="fas fa-ruler-combined"></i> {{ item.area|int }} م²</span>{% endif %}
+                        {% if item.rooms %}<span><i class="fas fa-bed"></i> {{ item.rooms }} غرف</span>{% endif %}
+                        {% if item.bathrooms %}<span><i class="fas fa-bath"></i> {{ item.bathrooms }} حمام</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('listings.search') }}" class="btn-outline">عرض جميع الإعلانات <i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Latest Listings -->
+{% if latest %}
+<section class="listings-section">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">جديد</span>
+            <h2>أحدث الإضافات</h2>
+            <p>تصفح أحدث الإعلانات المضافة إلى المنصة</p>
+        </div>
+        
+        <div class="listings-grid">
+            {% for item in latest %}
+            <div class="listing-card">
+                <a href="{{ url_for('listings.detail', id=item.id) }}" class="listing-image">
+                    {% if item.main_image %}
+                    <img src="{{ url_for('static', filename=item.main_image.image_path) }}" alt="{{ item.title }}">
+                    {% else %}
+                    <div class="no-image"><i class="fas fa-image"></i></div>
+                    {% endif %}
+                    {% if item.category %}
+                    <span class="listing-category" style="background:{{ item.category.color }};color:white;">
+                        {{ item.category.name_ar }}
+                    </span>
+                    {% endif %}
+                    {% if item.listing_type %}
+                    <span class="listing-type {{ item.listing_type }}">
+                        {{ 'للبيع' if item.listing_type == 'sale' else 'للإيجار' }}
+                    </span>
+                    {% endif %}
+                    {% if item.is_featured %}
+                    <span class="featured-badge"><i class="fas fa-crown"></i> مميز</span>
+                    {% endif %}
+                </a>
+                <div class="listing-body">
+                    {% if item.price %}
+                    <div class="listing-price">
+                        <span class="price">{{ "{:,.0f}".format(item.price) }} <small>{{ item.currency }}</small></span>
+                    </div>
+                    {% endif %}
+                    <h3 class="listing-title"><a href="{{ url_for('listings.detail', id=item.id) }}">{{ item.title }}</a></h3>
+                    <p class="listing-location"><i class="fas fa-map-marker-alt"></i> {{ item.governorate }}{% if item.district %} - {{ item.district }}{% endif %}</p>
+                    <div class="listing-meta">
+                        {% if item.area %}<span><i class="fas fa-ruler-combined"></i> {{ item.area|int }} م²</span>{% endif %}
+                        {% if item.rooms %}<span><i class="fas fa-bed"></i> {{ item.rooms }} غرف</span>{% endif %}
+                        {% if item.bathrooms %}<span><i class="fas fa-bath"></i> {{ item.bathrooms }} حمام</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-box">
+            <div class="cta-content">
+                <h2>هل تريد الإعلان على المنصة؟</h2>
+                <p>أضف إعلانك الآن مجاناً ووصل إلى آلاف المهتمين في جميع أنحاء العراق</p>
+            </div>
+            <a href="{{ url_for('listings.create') }}" class="btn-white">
+                <i class="fas fa-plus-circle"></i>
+                أضف إعلانك مجاناً
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <span class="section-tag">كيف تعمل</span>
+            <h2>ثلاث خطوات بسيطة</h2>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">01</div>
+                <div class="step-icon"><i class="fas fa-user-plus"></i></div>
+                <h3>سجل حسابك</h3>
+                <p>سجل حسابك باستخدام رقم هاتفك وكلمة مرور، بخطوات بسيطة وسريعة</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">02</div>
+                <div class="step-icon"><i class="fas fa-plus-square"></i></div>
+                <h3>أضف إعلانك</h3>
+                <p>اختر القسم المناسب وأضف تفاصيل إعلانك مع الصور بسهولة</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">03</div>
+                <div class="step-icon"><i class="fas fa-handshake"></i></div>
+                <h3>تواصل مع المهتمين</h3>
+                <p>استلم المكالمات والرسائل من المهتمين مباشرة عبر بيانات التواصل</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
