@@ -1,5 +1,10 @@
 // ===== Vision Platform - Main JS =====
-
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js')
+    .then(reg => console.log('SW registered:', reg.scope))
+    .catch(err => console.log('SW registration failed:', err));
+}
 document.addEventListener('DOMContentLoaded', function() {
     // Gallery image switch
     const galleryMain = document.querySelector('.gallery-main img');
