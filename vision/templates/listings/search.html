@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+{% block title %}البحث المتقدم
+<style>
+.search-section { padding: 30px 0; background: var(--bg); min-height: calc(100vh - 140px); }
+.search-section .section-header { margin-bottom: 24px; }
+.search-section .section-header h1 { font-size: 22px; font-weight: 800; }
+
+.search-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+
+.filter-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; height: fit-content; position: sticky; top: 100px; }
+.filter-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--accent); }
+.filter-panel h3 i { font-size: 14px; }
+.filter-group { margin-bottom: 16px; }
+.filter-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; }
+.filter-group select, .filter-group input { width: 100%; padding: 10px 12px; background: var(--primary-light); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; }
+.filter-group select:focus, .filter-group input:focus { outline: none; border-color: var(--accent); }
+.filter-actions { display: flex; gap: 8px; margin-top: 8px; }
+.filter-actions .btn-primary { flex: 1; padding: 10px; font-size: 13px; }
+.filter-actions .btn-outline { padding: 10px 14px; font-size: 13px; }
+
+.results-panel { min-width: 0; }
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.results-header p { font-size: 14px; color: var(--text-muted); }
+.results-header .sort-select { padding: 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; }
+
+.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.empty-state { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; text-align: center; }
+.empty-state i { font-size: 40px; color: var(--text-muted); margin-bottom: 12px; }
+.empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.empty-state p { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; }
+
+.pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+.pagination a, .pagination span { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; border: 1px solid var(--border); color: var(--text); background: var(--card); }
+.pagination a:hover { border-color: var(--accent); color: var(--accent); }
+.pagination .current { background: var(--accent); color: var(--primary); border-color: var(--accent); font-weight: 700; }
+
+/* Mobile filter toggle */
+.filter-toggle { display: none; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 16px; cursor: pointer; align-items: center; gap: 8px; }
+.filter-toggle i { color: var(--accent); }
+
+@media (max-width: 768px) {
+    .search-layout { grid-template-columns: 1fr; }
+    .filter-toggle { display: inline-flex; }
+    .filter-panel { position: static; display: none; margin-bottom: 16px; }
+    .filter-panel.open { display: block; }
+    .results-grid { grid-template-columns: 1fr; }
+    .results-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+<script>
+// Toggle filters on mobile
+const filterToggle = document.querySelector('.filter-toggle');
+const filterPanel = document.querySelector('.filter-panel');
+if (filterToggle && filterPanel) {
+    filterToggle.addEventListener('click', () => {
+        filterPanel.classList.toggle('open');
+    });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Search Header -->
+<section class="search-header-v2">
+    <div class="container">
+        <h1>البحث المتقدم</h1>
+        <p>اكتشف الإعلانات في جميع الأقسام</p>
+    </div>
+</section>
+
+<!-- Search Layout -->
+<section class="search-section-v2">
+    <div class="container">
+        <div class="search-layout-v2">
+            <!-- Sidebar Filters -->
+            <aside class="filter-sidebar" id="filterSidebar">
+                <div class="filter-panel-v2">
+                    <h3><i class="fas fa-sliders-h"></i> فلاتر البحث</h3>
+                    <div class="search-layout"><form action="{{ url_for('listings.search') }}" method="GET" id="filterForm">
+                        {% if request.args.get('category_id') %}
+                        <input type="hidden" name="category_id" value="{{ request.args.get('category_id') }}">
+                        {% endif %}
+                        
+                        <div class="filter-group-v2">
+                            <label>البحث</label>
+                            <div class="input-icon">
+                                <i class="fas fa-search"></i>
+                                <input type="text" name="q" value="{{ filters.get('q', '') }}" placeholder="ابحث عن إعلان...">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group-v2">
+                            <label>المحافظة</label>
+                            <select name="governorate">
+                                <option value="">كل المحافظات</option>
+                                {% for gov in governorates %}
+                                <option value="{{ gov.name_ar }}" {% if filters.get('governorate') == gov.name_ar %}selected{% endif %}>{{ gov.name_ar }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group-v2">
+                            <label>نوع العرض</label>
+                            <select name="listing_type">
+                                <option value="">الكل</option>
+                                {% for val, label in listing_types %}
+                                <option value="{{ val }}" {% if filters.get('listing_type') == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group-v2">
+                            <label>نوع العقار</label>
+                            <select name="property_type">
+                                <option value="">الكل</option>
+                                {% for val, label in property_types %}
+                                <option value="{{ val }}" {% if filters.get('property_type') == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group-v2">
+                            <label>نطاق السعر</label>
+                            <div class="price-range">
+                                <input type="number" name="min_price" value="{{ filters.get('min_price', '') }}" placeholder="من">
+                                <span class="range-sep">—</span>
+                                <input type="number" name="max_price" value="{{ filters.get('max_price', '') }}" placeholder="إلى">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group-v2">
+                            <label>الغرف</label>
+                            <select name="rooms">
+                                <option value="">الكل</option>
+                                <option value="1" {% if filters.get('rooms') == '1' %}selected{% endif %}>1+</option>
+                                <option value="2" {% if filters.get('rooms') == '2' %}selected{% endif %}>2+</option>
+                                <option value="3" {% if filters.get('rooms') == '3' %}selected{% endif %}>3+</option>
+                                <option value="4" {% if filters.get('rooms') == '4' %}selected{% endif %}>4+</option>
+                                <option value="5" {% if filters.get('rooms') == '5' %}selected{% endif %}>5+</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group-v2">
+                            <label>الترتيب</label>
+                            <select name="sort">
+                                <option value="newest" {% if filters.get('sort') == 'newest' %}selected{% endif %}>الأحدث</option>
+                                <option value="price_asc" {% if filters.get('sort') == 'price_asc' %}selected{% endif %}>الأقل سعراً</option>
+                                <option value="price_desc" {% if filters.get('sort') == 'price_desc' %}selected{% endif %}>الأعلى سعراً</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions-v2">
+                            <button type="submit" class="btn-primary btn-block"><i class="fas fa-search"></i> تطبيق</button>
+                            <a href="{{ url_for('listings.search') }}" class="btn-outline btn-block btn-sm" style="text-align:center;display:block;margin-top:8px;">إعادة ضبط</a>
+                        </div>
+                    </form>
+                </div>
+            </aside>
+            
+            <!-- Results -->
+            <div class="results-area">
+                <button class="filter-toggle-btn" id="filterToggleBtn" type="button">
+                    <i class="fas fa-sliders-h"></i> الفلاتر والبحث
+                </button>
+                
+                <div class="results-header-v2">
+                    <p>نتائج البحث: <strong>{{ pagination.total }}</strong> إعلان</p>
+                    <a href="{{ url_for('listings.create') }}" class="btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> أضف إعلانك
+                    </a>
+                </div>
+                
+                {% if listings %}
+                <div class="listings-grid-v2">
+                    {% for item in listings %}
+                    <div class="listing-card-v2">
+                        <a href="{{ url_for('listings.detail', id=item.id) }}" class="listing-image-v2">
+                            {% if item.main_image %}
+                            <img src="{{ url_for('static', filename=item.main_image.image_path) }}" alt="{{ item.title }}">
+                            {% else %}
+                            <div class="no-image-v2"><i class="fas fa-image"></i></div>
+                            {% endif %}
+                            {% if item.category %}
+                            <span class="listing-category-tag" style="background:{{ item.category.color }};color:#fff;">{{ item.category.name_ar }}</span>
+                            {% endif %}
+                            {% if item.listing_type %}
+                            <span class="listing-type-tag {{ item.listing_type }}">
+                                {{ 'للبيع' if item.listing_type == 'sale' else 'للإيجار' if item.listing_type == 'rent' else 'للاستثمار' }}
+                            </span>
+                            {% endif %}
+                            {% if item.is_featured %}
+                            <span class="featured-tag"><i class="fas fa-crown"></i> مميز</span>
+                            {% endif %}
+                        </a>
+                        <div class="listing-body-v2">
+                            {% if item.price %}
+                            <div class="listing-price-v2">
+                                <span class="price">{{ "{:,.0f}".format(item.price) }} <small>{{ item.currency }}</small></span>
+                            </div>
+                            {% endif %}
+                            <h3 class="listing-title-v2"><a href="{{ url_for('listings.detail', id=item.id) }}">{{ item.title }}</a></h3>
+                            <p class="listing-location-v2"><i class="fas fa-map-marker-alt"></i> {{ item.governorate }}{% if item.district %} - {{ item.district }}{% endif %}</p>
+                            <div class="listing-meta-v2">
+                                {% if item.area %}<span><i class="fas fa-ruler-combined"></i> {{ item.area|int }} م²</span>{% endif %}
+                                {% if item.rooms %}<span><i class="fas fa-bed"></i> {{ item.rooms }} غرف</span>{% endif %}
+                                {% if item.bathrooms %}<span><i class="fas fa-bath"></i> {{ item.bathrooms }} حمام</span>{% endif %}
+                                {% if item.car_year %}<span><i class="fas fa-calendar-alt"></i> {{ item.car_year }}</span>{% endif %}
+                                {% if item.car_mileage is not none %}<span><i class="fas fa-tachometer-alt"></i> {{ "{:,}".format(item.car_mileage) }} كم</span>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if pagination.pages > 1 %}
+                <div class="pagination-v2">
+                    {% if pagination.has_prev %}
+                    <a href="{{ url_for('listings.search', page=pagination.prev_num, **filters) }}" class="page-link"><i class="fas fa-chevron-right"></i></a>
+                    {% endif %}
+                    
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == pagination.page %}
+                            <span class="page-link active">{{ page_num }}</span>
+                            {% else %}
+                            <a href="{{ url_for('listings.search', page=page_num, **filters) }}" class="page-link">{{ page_num }}</a>
+                            {% endif %}
+                        {% else %}
+                        <span class="page-ellipsis">...</span>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if pagination.has_next %}
+                    <a href="{{ url_for('listings.search', page=pagination.next_num, **filters) }}" class="page-link"><i class="fas fa-chevron-left"></i></a>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="empty-state-v2">
+                    <div class="empty-icon"><i class="fas fa-search"></i></div>
+                    <h3>لا توجد نتائج</h3>
+                    <p>جرب تعديل معايير البحث أو تصفح جميع الإعلانات</p>
+                    <a href="{{ url_for('listings.search') }}" class="btn-outline">عرض جميع الإعلانات</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+/* ===== Search V2 Styles ===== */
+.search-header-v2 { background: var(--gradient-primary); padding: 40px 0 30px; text-align: center; border-bottom: 1px solid var(--border); }
+.search-header-v2 h1 { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+.search-header-v2 p { color: var(--text-muted); font-size: 15px; }
+
+.search-section-v2 { padding: 30px 0; background: var(--bg); min-height: calc(100vh - 180px); }
+.search-layout-v2 { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+
+/* Sidebar */
+.filter-sidebar { position: sticky; top: 90px; height: fit-content; }
+.filter-panel-v2 { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.filter-panel-v2 h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--accent); }
+.filter-panel-v2 h3 i { font-size: 14px; }
+
+.filter-group-v2 { margin-bottom: 14px; }
+.filter-group-v2 label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; }
+.filter-group-v2 input, .filter-group-v2 select {
+    width: 100%; padding: 10px 12px; background: var(--primary-light); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 14px; transition: 0.2s;
+}
+.filter-group-v2 input:focus, .filter-group-v2 select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212,168,83,0.1); }
+.filter-group-v2 .input-icon { position: relative; }
+.filter-group-v2 .input-icon i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; }
+.filter-group-v2 .input-icon input { padding-left: 34px; }
+
+.price-range { display: flex; align-items: center; gap: 8px; }
+.price-range input { flex: 1; }
+.range-sep { color: var(--text-muted); font-size: 13px; }
+
+.filter-actions-v2 { margin-top: 8px; }
+.filter-actions-v2 .btn-block { width: 100%; justify-content: center; }
+
+/* Results */
+.results-area { min-width: 0; }
+.filter-toggle-btn {
+    display: none; align-items: center; gap: 8px; padding: 10px 16px; background: var(--card);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text);
+    font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 16px; transition: 0.2s;
+}
+.filter-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+.filter-toggle-btn i { color: var(--accent); }
+
+.results-header-v2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.results-header-v2 p { font-size: 14px; color: var(--text-muted); }
+.results-header-v2 strong { color: var(--accent); }
+
+.listings-grid-v2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.listing-card-v2 { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: 0.3s; }
+.listing-card-v2:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: var(--shadow); }
+.listing-image-v2 { display: block; position: relative; height: 200px; background: var(--primary-light); overflow: hidden; }
+.listing-image-v2 img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+.listing-card-v2:hover .listing-image-v2 img { transform: scale(1.05); }
+.no-image-v2 { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 40px; }
+.listing-category-tag { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; z-index: 2; }
+.listing-type-tag { position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; z-index: 2; }
+.listing-type-tag.sale { background: var(--danger); color: #fff; }
+.listing-type-tag.rent { background: var(--info); color: #fff; }
+.listing-type-tag.investment { background: var(--warning); color: #fff; }
+.featured-tag { position: absolute; bottom: 10px; left: 10px; background: var(--accent); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; z-index: 2; }
+
+.listing-body-v2 { padding: 16px; }
+.listing-price-v2 { margin-bottom: 6px; }
+.listing-price-v2 .price { font-size: 17px; font-weight: 800; color: var(--accent); }
+.listing-price-v2 .price small { font-size: 12px; font-weight: 600; }
+.listing-title-v2 { font-size: 15px; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
+.listing-title-v2 a { color: var(--text); }
+.listing-title-v2 a:hover { color: var(--accent); }
+.listing-location-v2 { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.listing-location-v2 i { color: var(--accent); }
+.listing-meta-v2 { display: flex; gap: 14px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; }
+.listing-meta-v2 span { display: flex; align-items: center; gap: 4px; }
+.listing-meta-v2 i { color: var(--accent); font-size: 12px; }
+
+/* Pagination */
+.pagination-v2 { display: flex; justify-content: center; gap: 6px; margin-top: 28px; }
+.pagination-v2 .page-link { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; border: 1px solid var(--border); color: var(--text); background: var(--card); display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+.pagination-v2 .page-link:hover { border-color: var(--accent); color: var(--accent); }
+.pagination-v2 .page-link.active { background: var(--accent); color: var(--primary); border-color: var(--accent); font-weight: 700; }
+.pagination-v2 .page-ellipsis { padding: 8px 12px; color: var(--text-muted); font-size: 13px; }
+
+/* Empty state */
+.empty-state-v2 { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 50px 24px; text-align: center; }
+.empty-state-v2 .empty-icon { font-size: 44px; color: var(--text-muted); margin-bottom: 14px; }
+.empty-state-v2 h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.empty-state-v2 p { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .search-layout-v2 { grid-template-columns: 1fr; }
+    .filter-sidebar { position: static; display: none; margin-bottom: 16px; }
+    .filter-sidebar.open { display: block; }
+    .filter-toggle-btn { display: inline-flex; }
+    .listings-grid-v2 { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
+@media (max-width: 640px) {
+    .listings-grid-v2 { grid-template-columns: 1fr; }
+    .results-header-v2 { flex-direction: column; align-items: flex-start; }
+    .search-header-v2 h1 { font-size: 22px; }
+}
+</style>
+
+<script>
+const filterToggle = document.getElementById('filterToggleBtn');
+const filterSidebar = document.getElementById('filterSidebar');
+if (filterToggle && filterSidebar) {
+    filterToggle.addEventListener('click', () => {
+        filterSidebar.classList.toggle('open');
+    });
+    // Auto-close on mobile after submit
+    document.getElementById('filterForm').addEventListener('submit', () => {
+        if (window.innerWidth <= 900) {
+            filterSidebar.classList.remove('open');
+        }
+    });
+}
+</script>
+
+<style>
+.search-section { padding: 30px 0; background: var(--bg); min-height: calc(100vh - 140px); }
+.search-section .section-header { margin-bottom: 24px; }
+.search-section .section-header h1 { font-size: 22px; font-weight: 800; }
+
+.search-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+
+.filter-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; height: fit-content; position: sticky; top: 100px; }
+.filter-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; color: var(--accent); }
+.filter-panel h3 i { font-size: 14px; }
+.filter-group { margin-bottom: 16px; }
+.filter-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block; }
+.filter-group select, .filter-group input { width: 100%; padding: 10px 12px; background: var(--primary-light); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; }
+.filter-group select:focus, .filter-group input:focus { outline: none; border-color: var(--accent); }
+.filter-actions { display: flex; gap: 8px; margin-top: 8px; }
+.filter-actions .btn-primary { flex: 1; padding: 10px; font-size: 13px; }
+.filter-actions .btn-outline { padding: 10px 14px; font-size: 13px; }
+
+.results-panel { min-width: 0; }
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.results-header p { font-size: 14px; color: var(--text-muted); }
+.results-header .sort-select { padding: 8px 12px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; }
+
+.results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.empty-state { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; text-align: center; }
+.empty-state i { font-size: 40px; color: var(--text-muted); margin-bottom: 12px; }
+.empty-state h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.empty-state p { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; }
+
+.pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+.pagination a, .pagination span { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; border: 1px solid var(--border); color: var(--text); background: var(--card); }
+.pagination a:hover { border-color: var(--accent); color: var(--accent); }
+.pagination .current { background: var(--accent); color: var(--primary); border-color: var(--accent); font-weight: 700; }
+
+/* Mobile filter toggle */
+.filter-toggle { display: none; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 16px; cursor: pointer; align-items: center; gap: 8px; }
+.filter-toggle i { color: var(--accent); }
+
+@media (max-width: 768px) {
+    .search-layout { grid-template-columns: 1fr; }
+    .filter-toggle { display: inline-flex; }
+    .filter-panel { position: static; display: none; margin-bottom: 16px; }
+    .filter-panel.open { display: block; }
+    .results-grid { grid-template-columns: 1fr; }
+    .results-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+<script>
+// Toggle filters on mobile
+const filterToggle = document.querySelector('.filter-toggle');
+const filterPanel = document.querySelector('.filter-panel');
+if (filterToggle && filterPanel) {
+    filterToggle.addEventListener('click', () => {
+        filterPanel.classList.toggle('open');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}إدارة الإعلانات{% endblock %}
+
+{% block content %}
+<section class="dashboard-section admin">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-list"></i> إدارة الإعلانات</h1>
+        </div>
+        
+        <div class="filter-bar">
+            <a href="{{ url_for('admin.listings') }}" class="filter-btn {{ 'active' if not request.args.get('status') else '' }}">الكل</a>
+            <a href="{{ url_for('admin.listings', status='pending') }}" class="filter-btn {{ 'active' if request.args.get('status') == 'pending' else '' }}">قيد المراجعة</a>
+            <a href="{{ url_for('admin.listings', status='active') }}" class="filter-btn {{ 'active' if request.args.get('status') == 'active' else '' }}">نشط</a>
+            <a href="{{ url_for('admin.listings', status='rejected') }}" class="filter-btn {{ 'active' if request.args.get('status') == 'rejected' else '' }}">مرفوض</a>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الإعلان</th>
+                            <th>المستخدم</th>
+                            <th>النوع</th>
+                            <th>السعر</th>
+                            <th>الحالة</th>
+                            <th>المشاهدات</th>
+                            <th>مميز</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in listings %}
+                        <tr>
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.title[:50] }}</td>
+                            <td>{{ item.owner.phone }}</td>
+                            <td>{{ {'sale':'للبيع','rent':'للإيجار','investment':'للاستثمار'}[item.listing_type] or item.listing_type }}</td>
+                            <td>{{ "{:,.0f}".format(item.price) }} {{ item.currency }}</td>
+                            <td><span class="status-badge {{ item.status }}">{{ {'pending':'قيد المراجعة','active':'نشط','rejected':'مرفوض','sold':'مباع','rented':'مؤجر'}[item.status] or item.status }}</span></td>
+                            <td>{{ item.views }}</td>
+                            <td>
+                                {% if item.is_featured %}
+                                    <span class="status-badge active"><i class="fas fa-star"></i> نعم</span>
+                                    {% if item.featured_until %}
+                                        <small>حتى {{ item.featured_until.strftime('%Y-%m-%d') }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="status-badge">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="{{ url_for('listings.detail', id=item.id) }}" class="btn-icon" title="عرض"><i class="fas fa-eye"></i></a>
+                                    {% if item.status == 'pending' %}
+                                    <form method="POST" action="{{ url_for('admin.approve_listing', id=item.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon success" title="موافقة"><i class="fas fa-check"></i></button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.reject_listing', id=item.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon danger" title="رفض"><i class="fas fa-times"></i></button>
+                                    </form>
+                                    {% elif item.status == 'active' %}
+                                    <form method="POST" action="{{ url_for('admin.reject_listing', id=item.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon warning" title="إلغاء النشر"><i class="fas fa-ban"></i></button>
+                                    </form>
+                                    {% elif item.status == 'rejected' %}
+                                    <form method="POST" action="{{ url_for('admin.approve_listing', id=item.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon success" title="إعادة النشر"><i class="fas fa-undo"></i></button>
+                                    </form>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('admin.feature_listing', id=item.id) }}" class="inline-form">
+                                        <button type="submit" class="btn-icon {{ 'warning' if item.is_featured else 'info' }}" title="{{ 'إلغاء التميز' if item.is_featured else 'تمييز' }}">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('listings.delete', id=item.id) }}" class="inline-form" onsubmit="return confirm('حذف الإعلان؟')">
+                                        <button type="submit" class="btn-icon danger" title="حذف"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

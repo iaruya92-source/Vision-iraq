@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}إدارة المحافظات{% endblock %}
+
+{% block content %}
+<section class="dashboard-section admin">
+    <div class="container">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-map-marker-alt"></i> إدارة المحافظات</h1>
+            <p>إضافة وحذف المحافظات والمناطق</p>
+        </div>
+        
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h3>إضافة محافظة جديدة</h3>
+            </div>
+            <form method="POST" action="{{ url_for('admin.add_governorate') }}" class="form-inline">
+                <div class="form-group">
+                    <label>اسم المحافظة (English)</label>
+                    <input type="text" name="name" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>اسم المحافظة (عربي)</label>
+                    <input type="text" name="name_ar" required class="form-control">
+                </div>
+                <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> إضافة</button>
+            </form>
+        </div>
+        
+        <div class="dashboard-card" style="margin-top:24px;">
+            <div class="card-header">
+                <h3>المحافظات المسجلة</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الاسم بالعربي</th>
+                            <th>الاسم بالإنجليزية</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for g in governorates %}
+                        <tr>
+                            <td>{{ g.sort_order }}</td>
+                            <td>{{ g.name_ar }}</td>
+                            <td>{{ g.name }}</td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.delete_governorate', id=g.id) }}" class="inline-form" onsubmit="return confirm('تأكيد الحذف؟')">
+                                    <button type="submit" class="btn-icon danger"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

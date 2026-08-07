@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}لوحة التحكم{% endblock %}
+
+{% block content %}
+<section class="dashboard-section">
+    <div class="container">
+        <!-- Subscription Alert -->
+        {% if sub_alert %}
+        <div class="sub-alert {{ sub_alert.type }}">
+            <div class="sub-alert-icon"><i class="fas {{ sub_alert.icon }}"></i></div>
+            <div class="sub-alert-body">
+                <strong>{{ sub_alert.title }}</strong>
+                <p>{{ sub_alert.message }}</p>
+            </div>
+            {% if sub_alert.type in ('danger','warning') %}
+            <a href="https://wa.me/9647833779833?text=مرحباً%20أريد%20تجديد%20الاشتراك%20-{{ current_user.phone }}" target="_blank" class="btn btn-success btn-sm" style="white-space:nowrap;">
+                <i class="fab fa-whatsapp"></i> تواصل مع الإدارة
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="dashboard-header">
+            <h1><i class="fas fa-chart-line"></i> لوحة التحكم</h1>
+            <p>مرحباً {{ current_user.name or 'بك' }}{% if current_user.user_title %} ({{ current_user.user_title }}){% endif %}، إليك نظرة سريعة على نشاطك</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <div class="stat-icon"><i class="fas fa-list"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.total }}</span>
+                    <span class="stat-label">إجمالي الإعلانات</span>
+                </div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.active }}</span>
+                    <span class="stat-label">الإعلانات النشطة</span>
+                </div>
+            </div>
+            <div class="stat-card orange">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.pending }}</span>
+                    <span class="stat-label">قيد المراجعة</span>
+                </div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-icon"><i class="fas fa-eye"></i></div>
+                <div class="stat-info">
+                    <span class="stat-value">{{ stats.views }}</span>
+                    <span class="stat-label">إجمالي المشاهدات</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-content">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-clock"></i> أحدث إعلاناتك</h3>
+                    <a href="{{ url_for('dashboard.my_listings') }}" class="btn-text">عرض الكل</a>
+                </div>
+                {% if recent %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الإعلان</th>
+                                <th>السعر</th>
+                                <th>الحالة</th>
+                                <th>المشاهدات</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in recent %}
+                            <tr>
+                                <td>
+                                    <div class="table-item">
+                                        {% if item.main_image %}
+                                        <img src="{{ url_for('static', filename=item.main_image.image_path) }}" class="table-thumb">
+                                        {% else %}
+                                        <div class="table-thumb no-thumb"><i class="fas fa-image"></i></div>
+                                        {% endif %}
+                                        <span>{{ item.title[:40] }}{% if item.title|length > 40 %}...{% endif %}{% if item.is_featured %} <span class="featured-inline"><i class="fas fa-star"></i></span>{% endif %}</span>
+                                    </div>
+                                </td>
+                                <td>{{ "{:,.0f}".format(item.price) }} {{ item.currency }}</td>
+                                <td><span class="status-badge {{ item.status }}">{{ {'pending':'قيد المراجعة','active':'نشط','rejected':'مرفوض','sold':'مباع','rented':'مؤجر'}[item.status] or item.status }}</span></td>
+                                <td>{{ item.views }}</td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a href="{{ url_for('listings.detail', id=item.id) }}" class="btn-icon" title="عرض"><i class="fas fa-eye"></i></a>
+                                        <a href="{{ url_for('listings.edit', id=item.id) }}" class="btn-icon" title="تعديل"><i class="fas fa-edit"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state small">
+                    <p>لا توجد إعلانات بعد</p>
+                    <a href="{{ url_for('listings.create') }}" class="btn-primary btn-sm">أضف إعلانك الأول</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

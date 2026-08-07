@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Flask
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (keep directory, ignore files)
+static/uploads/listings/*
+static/uploads/avatars/*
+!static/uploads/listings/.gitkeep
+!static/uploads/avatars/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Android build
+android_app/app/build/
+android_app/.gradle/
+android_app/local.properties

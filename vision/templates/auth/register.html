@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}إنشاء حساب{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="container">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h2>إنشاء حساب جديد</h2>
+            <p class="auth-subtitle">انضم إلى Vision في خطوات بسيطة</p>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <form action="{{ url_for('auth.register') }}" method="POST" id="register-form">
+                <div class="form-group">
+                    <label for="name">الاسم الكامل</label>
+                    <div class="input-icon">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="name" name="name" placeholder="أدخل اسمك" required autocomplete="name">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">رقم الهاتف</label>
+                    <div class="input-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                        <input type="tel" id="phone" name="phone" placeholder="07XXXXXXXXX" required autocomplete="tel" pattern="07[0-9]{9}">
+                    </div>
+                    <small class="form-hint">يجب أن يبدأ بـ 07 ويتكون من 11 رقماً</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="6 أحرف على الأقل" required autocomplete="new-password" minlength="6">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">تأكيد كلمة المرور</label>
+                    <div class="input-icon">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="أعد إدخال كلمة المرور" required autocomplete="new-password">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user_type">نوع المستخدم</label>
+                    <select name="user_type" id="user_type" class="form-control" required>
+                        <option value="user">مستخدم عادي (مجاني)</option>
+                        <option value="realtor">صاحب عقارات (اشتراك شهري)</option>
+                        <option value="doctor">طبيب (اشتراك شهري)</option>
+                        <option value="pharmacist">صيدلاني (اشتراك شهري)</option>
+                        <option value="workshop">ورشة عمل (اشتراك شهري)</option>
+                        <option value="market_owner">صاحب سوق (اشتراك شهري)</option>
+                        <option value="car_dealer">تاجر سيارات (اشتراك شهري)</option>
+                        <option value="cooling">صاحب محل تبريد (اشتراك شهري)</option>
+                        <option value="bakery">صاحب مخبز (اشتراك شهري)</option>
+                        <option value="ro_water">صاحب محطة مياه (اشتراك شهري)</option>
+                        <option value="company">شركة / مؤسسة (اشتراك شهري)</option>
+                    </select>
+                    <small class="form-hint">الأقسام المدفوعة: أسبوع مجاني، ثم اشتراك شهري</small>
+                </div>
+                
+                <div class="form-group" id="user_title_group">
+                    <label for="user_title">اللقب / الدور</label>
+                    <select name="user_title" id="user_title" class="form-control">
+                        <option value="">اختر اللقب المناسب</option>
+                    </select>
+                    <small class="form-hint">يظهر هذا اللقب في صفحتك الشخصية وإعلاناتك</small>
+                </div>
+
+                <div class="form-group" id="posting_scope_group" style="display:none;">
+                    <label>نطاق النشر والوصول</label>
+                    <div class="scope-options">
+                        <label class="scope-option">
+                            <input type="radio" name="posting_scope" value="own_category" checked>
+                            <div class="scope-box">
+                                <i class="fas fa-bullseye"></i>
+                                <strong>نشر في قسمي فقط</strong>
+                                <small>أنشر وأشاهد إعلانات في قسمي التجاري فقط</small>
+                            </div>
+                        </label>
+                        <label class="scope-option">
+                            <input type="radio" name="posting_scope" value="full_platform">
+                            <div class="scope-box">
+                                <i class="fas fa-globe"></i>
+                                <strong>المنصة الكاملة</strong>
+                                <small>أنشر وأشاهد إعلانات في جميع الأقسام</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary btn-block">
+                    <i class="fas fa-user-plus"></i>
+                    إنشاء الحساب
+                </button>
+            </form>
+            
+            <div class="auth-divider">
+                <span>لديك حساب بالفعل؟</span>
+            </div>
+            
+            <a href="{{ url_for('auth.login') }}" class="btn-outline btn-block">
+                <i class="fas fa-sign-in-alt"></i>
+                تسجيل الدخول
+            </a>
+            
+            <div class="auth-footer">
+                <a href="{{ url_for('main.index') }}"><i class="fas fa-arrow-right"></i> العودة للرئيسية</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const titleOptions = {{ title_options | tojson }};
+    const userTypeSelect = document.getElementById('user_type');
+    const userTitleSelect = document.getElementById('user_title');
+    
+    function updateTitleOptions() {
+        const type = userTypeSelect.value;
+        userTitleSelect.innerHTML = '<option value="">اختر اللقب المناسب</option>';
+        if (titleOptions[type]) {
+            titleOptions[type].forEach(title => {
+                const opt = document.createElement('option');
+                opt.value = title;
+                opt.textContent = title;
+                userTitleSelect.appendChild(opt);
+            });
+        }
+    }
+    
+    userTypeSelect.addEventListener('change', updateTitleOptions);
+    updateTitleOptions();
+
+    // Show/hide posting scope for non-user types
+    const scopeGroup = document.getElementById('posting_scope_group');
+    function updateScopeVisibility() {
+        if (userTypeSelect.value === 'user') {
+            scopeGroup.style.display = 'none';
+            // Set default for regular users
+            scopeGroup.querySelector('input[value="full_platform"]').checked = true;
+        } else {
+            scopeGroup.style.display = 'block';
+            scopeGroup.querySelector('input[value="own_category"]').checked = true;
+        }
+    }
+    userTypeSelect.addEventListener('change', updateScopeVisibility);
+    updateScopeVisibility();
+</script>
+{% endblock %}
