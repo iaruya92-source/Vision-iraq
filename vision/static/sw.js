@@ -1,10 +1,9 @@
-// Service Worker for Vision PWA
 const CACHE_NAME = 'vision-cache-v1';
 const urlsToCache = [
   '/',
-  '/static/style.css',
-  '/static/script.js',
-  '/static/logo.png'
+  '/static/css/main.css',
+  '/static/js/main.js',
+  '/static/icon-192.png'
 ];
 
 self.addEventListener('install', event => {
@@ -12,6 +11,11 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
   );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', event => {
@@ -19,7 +23,9 @@ self.addEventListener('fetch', event => {
     caches.match(event.request)
       .then(response => {
         if (response) return response;
-        return fetch(event.request);
+        return fetch(event.request).catch(() => {
+          return caches.match('/');
+        });
       })
   );
 });
